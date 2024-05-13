@@ -1,0 +1,145 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coffee
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: coffee
+  template:
+    metadata:
+      labels:
+        app: coffee
+    spec:
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+        supplementalGroups:
+        - 1000
+      containers:
+        - name: coffee
+          image: nginx
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          ports:
+            - containerPort: 3000
+              name: http
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: 50m
+              memory: 32Mi
+            requests:
+              cpu: 5m
+              memory: 16Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsUser: 1000
+      imagePullSecrets:
+        - name: kaas-docker-registry-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: coffee-svc
+spec:
+  ports:
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
+      name: http
+  selector:
+    app: coffee
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tea
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tea
+  template:
+    metadata:
+      labels:
+        app: tea
+    spec:
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+        supplementalGroups:
+        - 1000
+      containers:
+        - name: tea
+          image: busybox
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          ports:
+            - containerPort: 3000
+              name: http
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: 50m
+              memory: 32Mi
+            requests:
+              cpu: 5m
+              memory: 16Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsUser: 1000
+      imagePullSecrets:
+        - name: kaas-docker-registry-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tea-svc
+spec:
+  ports:
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
+      name: http
+  selector:
+    app: tea
